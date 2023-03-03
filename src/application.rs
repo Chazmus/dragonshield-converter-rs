@@ -1,5 +1,6 @@
 use std::error::Error;
-use std::fs::{OpenOptions};
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader};
 use std::path::{PathBuf};
 use eframe::Frame;
 use egui::Context;
@@ -85,11 +86,14 @@ struct Record {
 }
 
 fn convert(input_path: &PathBuf, output_path: &str) -> Result<(), Box<dyn Error>> {
-    let mut rdr = csv::Reader::from_path(input_path).unwrap();
+    let mut buf_reader = BufReader::new(File::open(input_path)?);
+    buf_reader.read_line(&mut String::new())?; // skip weird first line that DragonShield exports
+    let mut reader = csv::Reader::from_reader(buf_reader);
     let output_file = OpenOptions::new().create(true).write(true).append(true).open(output_path).unwrap();
     let mut writer = csv::Writer::from_writer(output_file);
-    for result in rdr.deserialize() {
-        writer.serialize(result?)?;
+    for result in reader.deserialize() {
+        let record: Record = result?;
+        writer.serialize(record)?;
     }
     writer.flush()?;
     Ok(())
