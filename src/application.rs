@@ -1,25 +1,16 @@
-use std::error::Error;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader};
-use std::path::{PathBuf};
 use eframe::Frame;
 use egui::Context;
 use native_dialog::FileDialog;
+use std::error::Error;
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 
+#[derive(Default)]
 pub struct DragonShieldApplication {
     input_path: PathBuf,
     output_path: String,
     message: String,
-}
-
-impl Default for DragonShieldApplication {
-    fn default() -> Self {
-        Self {
-            input_path: PathBuf::default(),
-            output_path: String::default(),
-            message: String::default(),
-        }
-    }
 }
 
 impl DragonShieldApplication {
@@ -32,8 +23,7 @@ impl eframe::App for DragonShieldApplication {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
-                if ui.button("Input CSV...").clicked()
-                {
+                if ui.button("Input CSV...").clicked() {
                     let path = pick_a_file();
                     match path {
                         None => {}
@@ -45,17 +35,15 @@ impl eframe::App for DragonShieldApplication {
                 ui.label(self.input_path.to_str().unwrap());
             });
 
-            ui.horizontal(|ui|
-                {
-                    ui.label("Output path: ");
-                    ui.text_edit_singleline(&mut self.output_path)
-                });
+            ui.horizontal(|ui| {
+                ui.label("Output path: ");
+                ui.text_edit_singleline(&mut self.output_path)
+            });
 
-            ui.horizontal(|ui|
-                {
-                    ui.label("Messages: ");
-                    ui.label(&self.message);
-                });
+            ui.horizontal(|ui| {
+                ui.label("Messages: ");
+                ui.label(&self.message);
+            });
 
             if ui.button("Convert").clicked() {
                 if !self.input_path.exists() {
@@ -63,7 +51,7 @@ impl eframe::App for DragonShieldApplication {
                     return;
                 }
 
-                if self.output_path == "" {
+                if self.output_path.is_empty() {
                     self.message = String::from("No output input path!");
                     return;
                 }
@@ -89,7 +77,12 @@ fn convert(input_path: &PathBuf, output_path: &str) -> Result<(), Box<dyn Error>
     let mut buf_reader = BufReader::new(File::open(input_path)?);
     buf_reader.read_line(&mut String::new())?; // skip weird first line that DragonShield exports
     let mut reader = csv::Reader::from_reader(buf_reader);
-    let output_file = OpenOptions::new().create(true).write(true).append(true).open(output_path).unwrap();
+    let output_file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .open(output_path)
+        .unwrap();
     let mut writer = csv::Writer::from_writer(output_file);
     for result in reader.deserialize() {
         let record: Record = result?;
@@ -111,9 +104,9 @@ fn pick_a_file() -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
+    use crate::application::convert;
     use std::fs;
     use std::path::PathBuf;
-    use crate::application::convert;
 
     #[test]
     fn should_convert_without_error() {
@@ -121,10 +114,9 @@ mod tests {
         input_file.push("resources/tests/DragonShieldInput.csv");
         let mut output_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         output_file.push("resources/tests/output.csv");
-        if output_file.exists(){
+        if output_file.exists() {
             fs::remove_file(&output_file).unwrap();
         }
-        convert(&input_file, output_file.to_str().unwrap())
-            .expect("Something went wrong");
+        convert(&input_file, output_file.to_str().unwrap()).expect("Something went wrong");
     }
 }
