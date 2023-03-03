@@ -9,9 +9,9 @@ fn main() -> eframe::Result<()> {
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "eframe template",
+        "Dragon Shield CSV Converter",
         native_options,
-        Box::new(|cc| Box::new(eframe_template::TemplateApp::new(cc))),
+        Box::new(|_cc| Box::new(dragonshield_csv_converter::DragonShieldApplication::new())),
     )
 }
 
