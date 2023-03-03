@@ -1,6 +1,7 @@
+use pollster::FutureExt as _;
+use rfd::AsyncFileDialog;
 use eframe::Frame;
 use egui::Context;
-use native_dialog::FileDialog;
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader};
@@ -24,13 +25,7 @@ impl eframe::App for DragonShieldApplication {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Input CSV...").clicked() {
-                    let path = pick_a_file();
-                    match path {
-                        None => {}
-                        Some(path) => {
-                            self.input_path = path;
-                        }
-                    }
+                    self.input_path = pick_a_file().block_on();
                 };
                 ui.label(self.input_path.to_str().unwrap());
             });
@@ -92,14 +87,16 @@ fn convert(input_path: &PathBuf, output_path: &str) -> Result<(), Box<dyn Error>
     Ok(())
 }
 
-fn pick_a_file() -> Option<PathBuf> {
-    let path = FileDialog::new()
-        .set_location("~/Desktop")
-        .add_filter("CSV", &["csv"])
-        .show_open_single_file()
-        .unwrap();
-
-    path
+async fn pick_a_file() -> PathBuf {
+    let file = AsyncFileDialog::new()
+        .add_filter("csv", &["csv"])
+        .set_directory("~")
+        .pick_file()
+        .await;
+    match file {
+        None => PathBuf::new(),
+        Some(file) => file.path().to_path_buf()
+    }
 }
 
 #[cfg(test)]

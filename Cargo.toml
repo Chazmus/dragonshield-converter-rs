@@ -15,8 +15,9 @@ eframe = { version = "0.21.0", default-features = false, features = [
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
 serde = { version = "1", features = ["derive"] }
-native-dialog = "0.6.3"
 csv = "1.2.0"
+rfd = "0.11.1"
+pollster = "0.3.0"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
