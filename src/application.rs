@@ -1,7 +1,7 @@
-use pollster::FutureExt as _;
-use rfd::AsyncFileDialog;
 use eframe::Frame;
 use egui::Context;
+use pollster::FutureExt as _;
+use rfd::AsyncFileDialog;
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader};
@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 #[derive(Default)]
 pub struct DragonShieldApplication {
-    input_path: PathBuf,
+    input_data: Vec<u8>,
     output_path: String,
     message: String,
 }
@@ -25,9 +25,9 @@ impl eframe::App for DragonShieldApplication {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Input CSV...").clicked() {
-                    self.input_path = pick_a_file().block_on();
+                    self.input_data =  pick_a_file().block_on();
                 };
-                ui.label(self.input_path.to_str().unwrap());
+                // ui.label(self.input_path.to_str().unwrap());
             });
 
             ui.horizontal(|ui| {
@@ -41,8 +41,8 @@ impl eframe::App for DragonShieldApplication {
             });
 
             if ui.button("Convert").clicked() {
-                if !self.input_path.exists() {
-                    self.message = String::from("No input path!");
+                if self.input_data.is_empty() {
+                    self.message = String::from("No input csv!");
                     return;
                 }
 
@@ -50,7 +50,7 @@ impl eframe::App for DragonShieldApplication {
                     self.message = String::from("No output input path!");
                     return;
                 }
-                convert(&self.input_path, self.output_path.as_str()).expect("Failed to convert!");
+                convert(&self.input_data, self.output_path.as_str()).expect("Failed to convert!");
             }
         });
     }
@@ -68,10 +68,10 @@ struct Record {
     card_number: String,
 }
 
-fn convert(input_path: &PathBuf, output_path: &str) -> Result<(), Box<dyn Error>> {
-    let mut buf_reader = BufReader::new(File::open(input_path)?);
-    buf_reader.read_line(&mut String::new())?; // skip weird first line that DragonShield exports
-    let mut reader = csv::Reader::from_reader(buf_reader);
+fn convert(input_data: &Vec<u8>, output_path: &str) -> Result<(), Box<dyn Error>> {
+    let mut c = input_data.as_slice();
+    c.read_line(&mut String::new())?; // skip weird first line that DragonShield exports
+    let mut reader = csv::Reader::from_reader(c);
     let output_file = OpenOptions::new()
         .create(true)
         .write(true)
@@ -87,33 +87,34 @@ fn convert(input_path: &PathBuf, output_path: &str) -> Result<(), Box<dyn Error>
     Ok(())
 }
 
-async fn pick_a_file() -> PathBuf {
+async fn pick_a_file() -> Vec<u8> {
     let file = AsyncFileDialog::new()
         .add_filter("csv", &["csv"])
         .set_directory("~")
         .pick_file()
         .await;
-    match file {
-        None => PathBuf::new(),
-        Some(file) => file.path().to_path_buf()
-    }
+    let data = file.unwrap().read().await;
+    data
 }
 
 #[cfg(test)]
 mod tests {
     use crate::application::convert;
     use std::fs;
+    use std::fs::File;
     use std::path::PathBuf;
 
     #[test]
     fn should_convert_without_error() {
         let mut input_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         input_file.push("resources/tests/DragonShieldInput.csv");
+        // get data from file as a vector of u8
+        let data = fs::read(input_file).unwrap();
         let mut output_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         output_file.push("resources/tests/output.csv");
+        convert(&data, output_file.to_str().unwrap()).expect("Something went wrong");
         if output_file.exists() {
             fs::remove_file(&output_file).unwrap();
         }
-        convert(&input_file, output_file.to_str().unwrap()).expect("Something went wrong");
     }
 }
