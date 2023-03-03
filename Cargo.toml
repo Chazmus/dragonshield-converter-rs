@@ -29,11 +29,6 @@ console_error_panic_hook = "0.1.6"
 tracing-wasm = "0.2"
 wasm-bindgen-futures = "0.4"
 
-# Windows
-[target.x86_64-pc-windows-gnu]
-linker = "x86_64-w64-mingw32-gcc"
-ar = "x86_64-w64-mingw32-gcc-ar"
-
 [profile.release]
 opt-level = 2 # fast and small wasm
 

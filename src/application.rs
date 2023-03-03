@@ -3,9 +3,8 @@ use egui::Context;
 use pollster::FutureExt as _;
 use rfd::AsyncFileDialog;
 use std::error::Error;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::fs::OpenOptions;
+use std::io::BufRead;
 
 #[derive(Default)]
 pub struct DragonShieldApplication {
@@ -25,7 +24,7 @@ impl eframe::App for DragonShieldApplication {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Input CSV...").clicked() {
-                    self.input_data =  pick_a_file().block_on();
+                    self.input_data = pick_a_file().block_on();
                 };
                 // ui.label(self.input_path.to_str().unwrap());
             });
@@ -101,7 +100,6 @@ async fn pick_a_file() -> Vec<u8> {
 mod tests {
     use crate::application::convert;
     use std::fs;
-    use std::fs::File;
     use std::path::PathBuf;
 
     #[test]
