@@ -8,6 +8,7 @@ use std::io::BufRead;
 
 #[derive(Default)]
 pub struct DragonShieldApplication {
+    input_path: String,
     input_data: Vec<u8>,
     output_path: String,
     message: String,
@@ -24,9 +25,11 @@ impl eframe::App for DragonShieldApplication {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Input CSV...").clicked() {
-                    self.input_data = pick_a_file().block_on();
+                    let (path, data) = pick_a_file().block_on();
+                    self.input_path = path;
+                    self.input_data = data;
                 };
-                // ui.label(self.input_path.to_str().unwrap());
+                ui.label(self.input_path.as_str());
             });
 
             ui.horizontal(|ui| {
@@ -86,14 +89,15 @@ fn convert(input_data: &Vec<u8>, output_path: &str) -> Result<(), Box<dyn Error>
     Ok(())
 }
 
-async fn pick_a_file() -> Vec<u8> {
+async fn pick_a_file() -> (String, Vec<u8>) {
     let file = AsyncFileDialog::new()
         .add_filter("csv", &["csv"])
         .set_directory("~")
         .pick_file()
-        .await;
-    let data = file.unwrap().read().await;
-    data
+        .await.unwrap();
+    let file_name = file.file_name();
+    let data = file.read().await;
+    (file_name, data)
 }
 
 #[cfg(test)]

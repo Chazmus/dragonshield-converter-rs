@@ -30,7 +30,7 @@ fn main() {
         eframe::start_web(
             "the_canvas_id", // hardcode it
             web_options,
-            Box::new(|cc| Box::new(dragonshield_csv_converter::DragonShieldApplication::new())),
+            Box::new(|_cc| Box::new(dragonshield_csv_converter::DragonShieldApplication::new())),
         )
         .await
         .expect("failed to start eframe");
