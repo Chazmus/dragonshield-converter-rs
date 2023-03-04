@@ -94,7 +94,8 @@ async fn pick_a_file() -> (String, Vec<u8>) {
         .add_filter("csv", &["csv"])
         .set_directory("~")
         .pick_file()
-        .await.unwrap();
+        .await
+        .unwrap();
     let file_name = file.file_name();
     let data = file.read().await;
     (file_name, data)
