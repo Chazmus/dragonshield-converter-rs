@@ -3,7 +3,7 @@ var filesToCache = [
   './',
   './index.html',
   './dragonshield_csv_converter.js',
-  './dragonshield_csv_converter.wasm',
+  './dragonshield_csv_converter_bg.wasm',
 ];
 
 /* Start the service worker and cache all of the app's content */

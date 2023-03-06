@@ -1,3 +1,4 @@
+use web_sys::Blob;
 use eframe::Frame;
 use egui::Context;
 use pollster::FutureExt as _;
@@ -100,6 +101,37 @@ async fn pick_a_file() -> (String, Vec<u8>) {
     let data = file.read().await;
     (file_name, data)
 }
+
+
+fn download_file(data: &[u8], file_name: &str) {
+    let blob = Blob::new_with_u8_array_sequence_and_options(
+        &[data],
+        Blob::PropertyBag::new().type_("application/octet-stream"),
+    ).unwrap();
+
+    let url = Url::create_object_url_with_blob(&blob).unwrap();
+
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
+    let body = document.body().unwrap();
+
+    let anchor = document.create_element("a").unwrap();
+    anchor.set_attribute("href", &url).unwrap();
+    anchor.set_attribute("download", file_name).unwrap();
+    anchor.set_inner_html("Click here to download the file");
+
+    let anchor = Rc::new(anchor);
+
+    body.append_child(&anchor).unwrap();
+
+    // Trigger the download
+    anchor.click();
+
+    // Clean up
+    body.remove_child(&anchor).unwrap();
+    Url::revoke_object_url(&url).unwrap();
+}
+
 
 #[cfg(test)]
 mod tests {
