@@ -1,5 +1,6 @@
 trunk
 .idea/
+dist/
 
 # Created by https://www.toptal.com/developers/gitignore/api/rust,intellij,vim
 # Edit at https://www.toptal.com/developers/gitignore?templates=rust,intellij,vim
